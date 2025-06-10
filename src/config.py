@@ -126,6 +126,48 @@ class Config:
         self.host = os.getenv("MCP_TTS_HOST", self.host)
         self.port = int(os.getenv("MCP_TTS_PORT", str(self.port)))
         self.log_level = os.getenv("MCP_TTS_LOG_LEVEL", self.log_level)
+        
+        # TTS Configuration via Environment Variables
+        if os.getenv("MCP_TTS_VOICE"):
+            self.tts.voice = os.getenv("MCP_TTS_VOICE")
+        
+        if os.getenv("MCP_TTS_SPEED"):
+            try:
+                self.tts.speed = float(os.getenv("MCP_TTS_SPEED"))
+            except ValueError:
+                print(f"Warning: Invalid MCP_TTS_SPEED value, using default: {self.tts.speed}")
+        
+        if os.getenv("MCP_TTS_VOICE_PRESET"):
+            preset = os.getenv("MCP_TTS_VOICE_PRESET")
+            if preset in VOICE_PRESETS:
+                self.tts.current_preset = preset
+                # Update default instructions from the preset
+                self.tts.default_instructions = VOICE_PRESETS[preset]["instructions"]
+            else:
+                print(f"Warning: Unknown voice preset '{preset}', using default. Available presets: {', '.join(VOICE_PRESETS.keys())}")
+        
+        if os.getenv("MCP_TTS_CUSTOM_INSTRUCTIONS"):
+            self.tts.custom_instructions = os.getenv("MCP_TTS_CUSTOM_INSTRUCTIONS")
+        
+        # Audio Configuration via Environment Variables
+        if os.getenv("MCP_TTS_VOLUME"):
+            try:
+                volume = float(os.getenv("MCP_TTS_VOLUME"))
+                if 0.0 <= volume <= 1.0:
+                    self.audio.volume = volume
+                else:
+                    print(f"Warning: MCP_TTS_VOLUME must be between 0.0 and 1.0, using default: {self.audio.volume}")
+            except ValueError:
+                print(f"Warning: Invalid MCP_TTS_VOLUME value, using default: {self.audio.volume}")
+        
+        if os.getenv("MCP_TTS_DEVICE_NAME"):
+            self.audio.default_device = os.getenv("MCP_TTS_DEVICE_NAME")
+        
+        if os.getenv("MCP_TTS_DEVICE_INDEX"):
+            try:
+                self.audio.default_device_index = int(os.getenv("MCP_TTS_DEVICE_INDEX"))
+            except ValueError:
+                print(f"Warning: Invalid MCP_TTS_DEVICE_INDEX value, using default: {self.audio.default_device_index}")
     
     @staticmethod
     def _merge_config(base_config: "Config", file_config: Dict[str, Any]) -> "Config":

@@ -1,0 +1,131 @@
+name: Test and Lint
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+        
+      - name: Install dependencies
+        run: uv sync --all-extras
+        
+      - name: Run linting with ruff
+        run: uv run ruff check .
+        
+      - name: Run formatting check with black
+        run: uv run black --check .
+        
+      - name: Run import tests
+        run: |
+          uv run python -c "
+          import sys
+          sys.path.insert(0, 'src')
+          
+          # Test core imports
+          print('Testing imports...')
+          from config import Config, VOICE_PRESETS
+          from mcp_server import main
+          print('✅ Core imports successful')
+          
+          # Test configuration loading
+          print('Testing configuration...')
+          config = Config.load()
+          print(f'✅ Configuration loaded: {config.tts.voice}')
+          
+          # Test voice presets
+          print('Testing voice presets...')
+          assert len(VOICE_PRESETS) == 9
+          assert 'professional' in VOICE_PRESETS
+          assert 'nyc_cabbie' in VOICE_PRESETS
+          print('✅ Voice presets loaded correctly')
+          
+          print('🎉 All basic tests passed!')
+          "
+          
+      - name: Run pytest if test files exist
+        run: |
+          if ls tests/test_*.py >/dev/null 2>&1; then
+            echo "Running pytest..."
+            uv run pytest tests/ -v --tb=short
+          else
+            echo "No pytest files found, skipping pytest"
+          fi
+          
+      - name: Test package build
+        run: |
+          echo "Testing package build..."
+          uv build
+          echo "✅ Package built successfully"
+          ls -la dist/
+          
+      - name: Test package installation
+        run: |
+          echo "Testing package installation..."
+          cd dist
+          uv pip install --force-reinstall mcp_tts-*.whl
+          echo "✅ Package installed successfully"
+          
+      - name: Verify installed package
+        run: |
+          echo "Verifying installed package..."
+          python -c "
+          import mcp_tts
+          print('✅ Package import successful')
+          "
+          
+          # Test that entry points work
+          echo "Testing entry points..."
+          python -c "
+          import sys
+          import subprocess
+          
+          # Test that the entry points are registered
+          result = subprocess.run([sys.executable, '-m', 'pip', 'show', 'mcp-tts'], 
+                                capture_output=True, text=True)
+          if 'mcp-tts-server' in result.stdout:
+              print('✅ Entry points registered correctly')
+          else:
+              print('❌ Entry points not found')
+              print(result.stdout)
+              sys.exit(1)
+          "
+
+  lint-summary:
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+    
+    steps:
+      - name: Test Summary
+        run: |
+          if [ "${{ needs.test.result }}" = "success" ]; then
+            echo "🎉 All tests passed!"
+            echo "✅ Code formatting: OK"
+            echo "✅ Linting: OK" 
+            echo "✅ Imports: OK"
+            echo "✅ Package build: OK"
+            echo "✅ Installation: OK"
+          else
+            echo "❌ Some tests failed"
+            echo "Check the test results above for details"
+            exit 1
+          fi 

@@ -55,6 +55,14 @@ async def text_to_speech(text: str, voice: str = None, voice_instructions: str =
     config = Config.load()
     tts_manager.config = config
     
+    # Use configured defaults when parameters not provided
+    if voice is None:
+        voice = config.tts.voice
+    if voice_instructions is None:
+        voice_instructions = config.get_current_voice_instructions()
+    if speed == 1.0:  # Check if default speed was used
+        speed = config.tts.speed
+    
     # Find device index by name if provided, or use saved default
     device_index = None
     if device_name:
@@ -170,6 +178,34 @@ def get_tts_status() -> str:
     ]
     
     return "\n".join(status_text)
+
+
+@mcp.tool()
+def get_current_config() -> str:
+    """
+    Get current TTS configuration settings (voice, preset, device, etc.).
+    
+    Returns:
+        Current configuration details
+    """
+    # Reload config to get latest settings
+    current_config = Config.load()
+    
+    config_text = [
+        "⚙️ Current TTS Configuration:",
+        f"  🎤 Voice: {current_config.tts.voice}",
+        f"  🎭 Voice Preset: {current_config.tts.current_preset}",
+        f"  📝 Custom Instructions: {'Yes' if current_config.tts.custom_instructions.strip() else 'No (using preset)'}",
+        f"  ⚡ Speed: {current_config.tts.speed}x",
+        f"  🔊 Volume: {current_config.audio.volume:.1%}",
+        f"  🎵 Default Device: {current_config.audio.default_device or 'System default'}",
+        f"  🎵 Default Device Index: {current_config.audio.default_device_index or 'None set'}",
+        "",
+        "💡 Current voice instructions:",
+        f"  \"{current_config.get_current_voice_instructions()[:100]}{'...' if len(current_config.get_current_voice_instructions()) > 100 else ''}\""
+    ]
+    
+    return "\n".join(config_text)
 
 
 @mcp.tool()
