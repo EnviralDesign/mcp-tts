@@ -92,7 +92,7 @@ Add this to your Cursor MCP settings file (`~/.cursor/mcp.json`):
   "mcpServers": {
     "mcp_tts_server": {
       "command": "uvx",
-      "args": ["mcp-tts-server-stdio"],
+      "args": ["--from", "mcp-tts", "mcp-tts-server-stdio"],
       "env": {
         "OPENAI_API_KEY": "your-openai-api-key-here",
         "PYTHONIOENCODING": "utf-8",
@@ -105,36 +105,6 @@ Add this to your Cursor MCP settings file (`~/.cursor/mcp.json`):
     }
   }
 }
-```
-
-**Alternative Configurations:**
-
-Minimal configuration (if you prefer defaults):
-```json
-{
-  "mcpServers": {
-    "mcp_tts_server": {
-      "command": "uvx",
-      "args": ["mcp-tts-server-stdio"],
-      "env": {
-        "OPENAI_API_KEY": "your-openai-api-key-here",
-        "PYTHONIOENCODING": "utf-8"
-      }
-    }
-  }
-}
-```
-
-Local development (using batch file):
-```json
-{
-  "mcpServers": {
-    "mcp_tts_server": {
-      "command": "C:/repos/mcp-tts/start-mcp-tts.bat"
-    }
-  }
-}
-```
 
 Local development (direct command):
 ```json
