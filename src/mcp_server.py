@@ -5,6 +5,7 @@ This runs only the MCP server via stdio (no web interface).
 """
 
 import sys
+import os
 from pathlib import Path
 
 try:
@@ -21,7 +22,13 @@ except ImportError:
 
 from mcp.server import FastMCP
 
-# Initialize components
+# Initialize components  
+print(f"🚀 MCP Server starting up...")
+print(f"   OPENAI_API_KEY: {'✅ Present' if os.getenv('OPENAI_API_KEY') else '❌ Missing'}")
+print(f"   MCP_TTS_VOICE: {os.getenv('MCP_TTS_VOICE', 'default')}")
+print(f"   MCP_TTS_VOICE_PRESET: {os.getenv('MCP_TTS_VOICE_PRESET', 'default')}")
+print(f"   MCP_TTS_SPEED: {os.getenv('MCP_TTS_SPEED', '1.0')}")
+
 config = Config.load()
 tts_manager = TTSManager(config)
 
@@ -30,24 +37,13 @@ mcp = FastMCP("mcp_tts_server")
 
 
 @mcp.tool()
-async def text_to_speech(
-    text: str,
-    voice: str = None,
-    voice_instructions: str = None,
-    speed: float = 1.0,
-    device_name: str = None,
-    stream: bool = False,
-) -> str:
+async def text_to_speech(text: str) -> str:
     """
-    Convert text to speech and play through speakers with customizable voice style.
+    Convert text to speech and play through speakers.
+    All settings (voice, speed, device, etc.) are configured via environment variables in MCP config.
 
     Args:
         text: Text to convert to speech
-        voice: Voice to use (e.g., 'alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer', 'ballad')
-        voice_instructions: Custom voice style instructions (e.g., 'friendly and energetic', 'professional and calm')
-        speed: Speech speed from 0.25 to 4.0 (default: 1.0)
-        device_name: Audio device name to use (optional)
-        stream: Whether to stream audio for faster playback (default: false)
 
     Returns:
         Success or error message
@@ -55,25 +51,22 @@ async def text_to_speech(
     if not text:
         return "Error: No text provided"
 
-    # Reload config to get latest user settings
+    # Reload config to get latest user settings (ensures fresh env vars)
     global config, tts_manager
     config = Config.load()
     tts_manager.config = config
 
-    # Use configured defaults when parameters not provided
-    if voice is None:
-        voice = config.tts.voice
-    if voice_instructions is None:
-        voice_instructions = config.get_current_voice_instructions()
-    if speed == 1.0:  # Check if default speed was used
-        speed = config.tts.speed
-
-    # Find device index by name if provided, or use saved default
+    # All settings come from config (single source of truth)
+    voice = config.tts.voice
+    voice_instructions = config.get_current_voice_instructions()
+    speed = config.tts.speed
+    
+    # Find device index from config
     device_index = None
-    if device_name:
+    if config.audio.default_device:
         devices = tts_manager.get_audio_devices()
         for device in devices:
-            if device_name.lower() in device.name.lower():
+            if config.audio.default_device.lower() in device.name.lower():
                 device_index = device.index
                 break
     elif config.audio.default_device_index is not None:
@@ -86,22 +79,14 @@ async def text_to_speech(
         if not provider:
             return f"❌ No TTS provider available. Current provider: {tts_manager.current_provider}. Available providers: {', '.join(tts_manager.get_available_providers()) or 'None'}"
 
-        if stream:
-            success = await tts_manager.generate_and_stream(
-                text=text,
-                voice=voice,
-                instructions=voice_instructions,
-                device_index=device_index,
-                speed=speed,
-            )
-        else:
-            success = await tts_manager.generate_and_play(
-                text=text,
-                voice=voice,
-                instructions=voice_instructions,
-                device_index=device_index,
-                speed=speed,
-            )
+        # Always use non-streaming for simplicity (can be made configurable later)
+        success = await tts_manager.generate_and_play(
+            text=text,
+            voice=voice,
+            instructions=voice_instructions,
+            device_index=device_index,
+            speed=speed,
+        )
 
         if success:
             return f"✅ Successfully played speech: {len(text)} characters"
@@ -200,8 +185,13 @@ def get_current_config() -> str:
     Returns:
         Current configuration details
     """
-    # Reload config to get latest settings
+    # Reload config to get latest settings (this may be why it works!)
+    global config, tts_manager
     current_config = Config.load()
+    
+    # Update the global config and tts_manager too
+    config = current_config
+    tts_manager.config = config
 
     config_text = [
         "⚙️ Current TTS Configuration:",
