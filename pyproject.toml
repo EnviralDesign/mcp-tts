@@ -65,7 +65,4 @@ line-length = 88
 target-version = ["py311"]
 
 [tool.uv]
-dev-dependencies = [
-    "build>=1.0.0",
-    "twine>=6.1.0",
-]
+dev-dependencies = []

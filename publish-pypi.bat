@@ -20,37 +20,10 @@ if exist "dist\" (
 )
 
 echo.
-echo 🔧 Installing build dependencies...
-uv add --dev build twine
-if %ERRORLEVEL% NEQ 0 (
-    echo ❌ Failed to install build dependencies
-    pause
-    exit /b 1
-)
-
-echo.
-echo 🏗️ Building package...
-uv run python -m build
-if %ERRORLEVEL% NEQ 0 (
-    echo ❌ Build failed!
-    pause
-    exit /b 1
-)
-
-echo.
-echo 📋 Checking package...
-uv run python -m twine check dist/*
-if %ERRORLEVEL% NEQ 0 (
-    echo ❌ Package check failed!
-    pause
-    exit /b 1
-)
-
-echo.
-echo 🔑 Publishing to PyPI...
+echo 🔑 Publishing to PyPI with uv...
 echo ⚠️  Make sure you have your PyPI token ready!
 echo.
-uv run python -m twine upload dist/*
+uv publish
 
 if %ERRORLEVEL% EQU 0 (
     echo.
