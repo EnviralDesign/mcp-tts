@@ -1,0 +1,16 @@
+host: localhost
+port: 8742
+log_level: INFO
+
+tts:
+  provider: openai
+  voice: ballad
+  speed: 1.0
+  language: en
+  default_instructions: "Clear, friendly, and conversational"
+
+audio:
+  default_device: null
+  volume: 0.8
+  sample_rate: 24000
+  buffer_size: 1024 

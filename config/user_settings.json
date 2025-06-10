@@ -1,0 +1,13 @@
+{
+  "tts": {
+    "voice": "echo",
+    "speed": 1.0,
+    "current_preset": "eternal_optimist",
+    "custom_instructions": ""
+  },
+  "audio": {
+    "default_device": null,
+    "default_device_index": null,
+    "volume": 0.8
+  }
+}

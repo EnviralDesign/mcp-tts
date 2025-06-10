@@ -1,0 +1,74 @@
+[project]
+name = "mcp-tts"
+version = "0.2.0"
+description = "MCP Text-to-Speech Server for Cursor IDE (and others) with cross-platform audio playback"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Lucas Morgan", email = "enviraldesign@gmail.com" }
+]
+license = { text = "MIT" }
+keywords = ["mcp", "tts", "text-to-speech", "cursor", "ide"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
+dependencies = [
+    "mcp>=0.6.0",
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "websockets>=12.0",
+    "openai>=1.5.0",
+    "sounddevice>=0.4.6",
+    "numpy>=1.24.0",
+    "pydantic>=2.5.0",
+    "pyyaml>=6.0",
+    "httpx>=0.25.0",
+    "python-multipart>=0.0.6",
+    "python-dotenv>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/EnviralDesign/mcp-tts"
+Repository = "https://github.com/EnviralDesign/mcp-tts"
+Issues = "https://github.com/EnviralDesign/mcp-tts/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+mcp-tts-server = "src.main:main"
+mcp-tts-server-stdio = "src.mcp_server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "twine>=6.1.0",
+]
