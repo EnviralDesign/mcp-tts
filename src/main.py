@@ -8,25 +8,23 @@ import asyncio
 import logging
 import os
 import sys
-from typing import Optional
 from pathlib import Path
 
 # Add the src directory to the Python path
 src_dir = Path(__file__).parent
 sys.path.insert(0, str(src_dir))
 
-import uvicorn
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
+import uvicorn  # noqa: E402
+from fastapi import FastAPI, Request  # noqa: E402
+from fastapi.responses import HTMLResponse  # noqa: E402
+from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-from api.routes import create_api_routes, initialize_tts_manager
-from config import Config
+from api.routes import create_api_routes, initialize_tts_manager  # noqa: E402
+from config import Config  # noqa: E402
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -36,20 +34,20 @@ def create_app(config: Config) -> FastAPI:
     app = FastAPI(
         title="MCP TTS Server",
         description="Text-to-Speech server with MCP protocol support",
-        version="0.1.0"
+        version="0.1.0",
     )
-    
+
     # Initialize TTS manager for API routes
     initialize_tts_manager(config)
-    
+
     # Add API routes
     api_routes = create_api_routes()
     app.include_router(api_routes, prefix="/api")
-    
+
     # Serve static files
     if os.path.exists("static"):
         app.mount("/static", StaticFiles(directory="static"), name="static")
-    
+
     @app.get("/", response_class=HTMLResponse)
     async def read_root(request: Request):
         """Serve the main web UI."""
@@ -236,7 +234,7 @@ def create_app(config: Config) -> FastAPI:
         </body>
         </html>
         """
-    
+
     @app.get("/config", response_class=HTMLResponse)
     async def config_page(request: Request):
         """Serve the configuration page."""
@@ -626,22 +624,19 @@ def create_app(config: Config) -> FastAPI:
         </body>
         </html>
         """
-    
+
     return app
 
 
 async def run_web_server(config: Config):
     """Run the web server."""
     app = create_app(config)
-    
+
     # Create uvicorn config
     uvicorn_config = uvicorn.Config(
-        app,
-        host=config.host,
-        port=config.port,
-        log_level="info"
+        app, host=config.host, port=config.port, log_level="info"
     )
-    
+
     # Create and run server
     server = uvicorn.Server(uvicorn_config)
     await server.serve()
@@ -650,10 +645,10 @@ async def run_web_server(config: Config):
 async def main_async():
     """Async main entry point for the MCP TTS server."""
     logger.info("Starting MCP TTS Server Web Interface...")
-    
+
     # Load configuration
     config = Config.load()
-    
+
     # Run the web server for configuration and testing
     # MCP server runs separately via src/mcp_server.py when called by Cursor
     logger.info(f"Starting web server on http://{config.host}:{config.port}")
@@ -666,4 +661,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()
