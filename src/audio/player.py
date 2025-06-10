@@ -19,31 +19,31 @@ if not CI_MODE:
 else:
     # Mock sounddevice for CI
     logger.info("Running in CI mode - audio functionality will be mocked")
-    
+
     class MockSoundDevice:
         """Mock sounddevice for CI environments."""
-        
+
         @staticmethod
         def play(*args, **kwargs):
             logger.debug("Mock audio play called")
-            
-        @staticmethod 
+
+        @staticmethod
         def wait():
             logger.debug("Mock audio wait called")
-            
+
         @staticmethod
         def query_devices():
             return [
                 {
                     "name": "Mock Audio Device",
                     "max_output_channels": 2,
-                    "default_samplerate": 44100
+                    "default_samplerate": 44100,
                 }
             ]
-            
+
         class default:
             device = [None, 0]  # Input, Output
-    
+
     sd = MockSoundDevice()
 
 
@@ -244,7 +244,7 @@ class AudioPlayer:
         if CI_MODE:
             logger.info(f"CI mode: mock testing device {device_index}")
             return True
-            
+
         try:
             # Generate a simple test tone (440 Hz for 0.5 seconds)
             duration = 0.5
