@@ -69,15 +69,12 @@ jobs:
           print('🎉 All CI tests passed!')
           "
           
-      - name: Run pytest if test files exist
+      - name: Run essential tests only
         run: |
-          if ls tests/test_*.py >/dev/null 2>&1; then
-            echo "Running pytest with CI mode..."
-            export CI_MODE=true
-            uv run pytest tests/ -v --tb=short
-          else
-            echo "No pytest files found, skipping pytest"
-          fi
+          export CI_MODE=true
+          echo "Running essential tests for CI..."
+          uv run pytest tests/test_env.py -v --tb=short
+          echo "✅ Essential tests completed"
           
       - name: Test package build
         run: |

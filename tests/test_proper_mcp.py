@@ -1,6 +1,8 @@
 import json
 import subprocess
 import sys
+import os
+from pathlib import Path
 
 
 def test_mcp_server():
@@ -19,6 +21,17 @@ def test_mcp_server():
     # Tools list request
     tools_request = {"jsonrpc": "2.0", "method": "tools/list", "params": {}, "id": 2}
 
+    # Get current working directory (should be project root)
+    project_root = Path.cwd()
+    if not (project_root / "src" / "mcp_server.py").exists():
+        project_root = Path(__file__).parent.parent
+
+    print(f"Testing MCP server from: {project_root}")
+
+    # Set CI mode for testing
+    env = os.environ.copy()
+    env["CI_MODE"] = "true"
+
     try:
         # Start MCP server
         proc = subprocess.Popen(
@@ -27,7 +40,8 @@ def test_mcp_server():
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            cwd="C:/repos/mcp-cursor-tts",
+            cwd=str(project_root),
+            env=env,
         )
 
         # Send initialize
@@ -52,27 +66,25 @@ def test_mcp_server():
 
         # Read tools response
         tools_response = proc.stdout.readline().strip()
-        if tools_response:
-            tools_data = json.loads(tools_response)
-            if "result" in tools_data and "tools" in tools_data["result"]:
-                tools = tools_data["result"]["tools"]
-                print(f"\n✅ Found {len(tools)} tools:")
-                for tool in tools:
-                    print(
-                        f"   • {tool['name']}: {tool.get('description', 'No description')}"
-                    )
-                return True
-            else:
-                print("❌ No tools found in response")
-                print(f"Response: {tools_data}")
-                return False
-        else:
-            print("❌ No response to tools/list request")
-            return False
+        assert tools_response, "Should receive response to tools/list request"
+
+        tools_data = json.loads(tools_response)
+        assert "result" in tools_data, f"Response should contain 'result': {tools_data}"
+        assert (
+            "tools" in tools_data["result"]
+        ), f"Result should contain 'tools': {tools_data['result']}"
+
+        tools = tools_data["result"]["tools"]
+        print(f"\n✅ Found {len(tools)} tools:")
+        for tool in tools:
+            print(f"   • {tool['name']}: {tool.get('description', 'No description')}")
+
+        assert len(tools) > 0, "Should find at least one tool"
+        print("✅ MCP server test passed!")
 
     except Exception as e:
-        print(f"❌ Error: {e}")
-        return False
+        # Re-raise as assertion error for pytest
+        raise AssertionError(f"MCP server test failed: {e}")
     finally:
         try:
             proc.terminate()
@@ -81,5 +93,10 @@ def test_mcp_server():
 
 
 if __name__ == "__main__":
-    success = test_mcp_server()
-    sys.exit(0 if success else 1)
+    try:
+        test_mcp_server()
+        print("✅ All tests passed!")
+        sys.exit(0)
+    except AssertionError as e:
+        print(f"❌ Test failed: {e}")
+        sys.exit(1)

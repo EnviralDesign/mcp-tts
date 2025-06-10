@@ -42,7 +42,13 @@ def test_env_loading():
     print(f"   OPENAI_API_KEY in env: {'Yes' if os.getenv('OPENAI_API_KEY') else 'No'}")
     print(f"   .env file exists: {'Yes' if os.path.exists('.env') else 'No'}")
 
-    return config.openai_api_key is not None
+    # For CI: just assert that config loads successfully
+    assert config is not None, "Config should load successfully"
+    assert config.tts.provider == "openai", "TTS provider should be openai"
+    assert config.audio.volume > 0, "Audio volume should be greater than 0"
+
+    # API key is optional for this test
+    print("✅ Environment loading test passed!")
 
 
 if __name__ == "__main__":
