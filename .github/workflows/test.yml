@@ -25,6 +25,11 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
         
+      - name: Install system audio dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y portaudio19-dev libasound2-dev
+        
       - name: Install dependencies
         run: uv sync --all-extras
         
@@ -38,7 +43,11 @@ jobs:
         run: |
           uv run python -c "
           import sys
+          import os
           sys.path.insert(0, 'src')
+          
+          # Set environment variable to indicate CI mode
+          os.environ['CI_MODE'] = 'true'
           
           # Test core imports
           print('Testing imports...')
@@ -57,6 +66,12 @@ jobs:
           assert 'professional' in VOICE_PRESETS
           assert 'nyc_cabbie' in VOICE_PRESETS
           print('✅ Voice presets loaded correctly')
+          
+          # Test TTS manager creation (with CI-safe mode)
+          print('Testing TTS manager...')
+          from tts.manager import TTSManager
+          tts_manager = TTSManager(config)
+          print('✅ TTS Manager created successfully')
           
           print('🎉 All basic tests passed!')
           "

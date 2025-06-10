@@ -2,14 +2,49 @@
 Cross-platform audio playback for TTS audio streams.
 """
 
+import os
 import logging
 import numpy as np
-import sounddevice as sd
 from typing import Optional, List, AsyncIterable
 from dataclasses import dataclass
 from io import BytesIO
 
 logger = logging.getLogger(__name__)
+
+# Check if we're running in CI mode
+CI_MODE = os.getenv("CI_MODE") == "true" or os.getenv("CI") == "true"
+
+if not CI_MODE:
+    import sounddevice as sd
+else:
+    # Mock sounddevice for CI
+    logger.info("Running in CI mode - audio functionality will be mocked")
+    
+    class MockSoundDevice:
+        """Mock sounddevice for CI environments."""
+        
+        @staticmethod
+        def play(*args, **kwargs):
+            logger.debug("Mock audio play called")
+            
+        @staticmethod 
+        def wait():
+            logger.debug("Mock audio wait called")
+            
+        @staticmethod
+        def query_devices():
+            return [
+                {
+                    "name": "Mock Audio Device",
+                    "max_output_channels": 2,
+                    "default_samplerate": 44100
+                }
+            ]
+            
+        class default:
+            device = [None, 0]  # Input, Output
+    
+    sd = MockSoundDevice()
 
 
 @dataclass
@@ -206,6 +241,10 @@ class AudioPlayer:
     @staticmethod
     def test_device(device_index: Optional[int] = None) -> bool:
         """Test if an audio device is working."""
+        if CI_MODE:
+            logger.info(f"CI mode: mock testing device {device_index}")
+            return True
+            
         try:
             # Generate a simple test tone (440 Hz for 0.5 seconds)
             duration = 0.5
