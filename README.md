@@ -46,7 +46,7 @@ For development or if you want to modify the code:
 1. **Clone and setup:**
    ```bash
    git clone <your-repo>
-   cd mcp-cursor-tts
+   cd mcp-tts
    ```
 
 2. **Install dependencies:**
@@ -85,31 +85,14 @@ uv run python src/main.py
 
 Add this to your Cursor MCP settings file (`~/.cursor/mcp.json`):
 
-**Option 1 (Recommended - Using uvx):**
+**Single Source of Truth (Recommended - Using uvx):**
 
-Basic configuration (minimal setup):
 ```json
 {
   "mcpServers": {
     "mcp_tts_server": {
       "command": "uvx",
-      "args": ["--from", "mcp-cursor-tts", "mcp-tts-server-stdio"],
-      "env": {
-        "OPENAI_API_KEY": "your-openai-api-key-here",
-        "PYTHONIOENCODING": "utf-8"
-      }
-    }
-  }
-}
-```
-
-Full configuration (customize voice, device, volume, etc.):
-```json
-{
-  "mcpServers": {
-    "mcp_tts_server": {
-      "command": "uvx",
-      "args": ["--from", "mcp-cursor-tts", "mcp-tts-server-stdio"],
+      "args": ["mcp-tts-server-stdio"],
       "env": {
         "OPENAI_API_KEY": "your-openai-api-key-here",
         "PYTHONIOENCODING": "utf-8",
@@ -124,31 +107,49 @@ Full configuration (customize voice, device, volume, etc.):
 }
 ```
 
-**Option 2 (Local development - Using batch file):**
+**Alternative Configurations:**
+
+Minimal configuration (if you prefer defaults):
 ```json
 {
   "mcpServers": {
     "mcp_tts_server": {
-      "command": "C:/repos/mcp-cursor-tts/start-mcp-tts.bat"
+      "command": "uvx",
+      "args": ["mcp-tts-server-stdio"],
+      "env": {
+        "OPENAI_API_KEY": "your-openai-api-key-here",
+        "PYTHONIOENCODING": "utf-8"
+      }
     }
   }
 }
 ```
 
-**Option 3 (Local development - Direct command):**
+Local development (using batch file):
+```json
+{
+  "mcpServers": {
+    "mcp_tts_server": {
+      "command": "C:/repos/mcp-tts/start-mcp-tts.bat"
+    }
+  }
+}
+```
+
+Local development (direct command):
 ```json
 {
   "mcpServers": {
     "mcp_tts_server": {
       "command": "uv",
-      "args": ["--directory", "C:/repos/mcp-cursor-tts", "run", "python", "src/mcp_server.py"],
+      "args": ["--directory", "C:/repos/mcp-tts", "run", "python", "src/mcp_server.py"],
       "env": {}
     }
   }
 }
 ```
 
-**Important for local options:** Update the path `C:/repos/mcp-cursor-tts` to match your actual project location.
+**Important for local options:** Update the path `C:/repos/mcp-tts` to match your actual project location.
 
 ### Available MCP Tools
 
@@ -238,7 +239,7 @@ Visit `http://localhost:8742` for:
 ## 📁 Project Structure
 
 ```
-mcp-cursor-tts/
+mcp-tts/
 ├── src/
 │   ├── mcp_server.py          # FastMCP server (for Cursor)
 │   ├── main.py               # Web configuration server
@@ -367,10 +368,10 @@ To make this package available via `uvx` for all users:
 
 4. **Test the published package:**
    ```bash
-   uvx --from mcp-cursor-tts mcp-tts-server-stdio
+   uvx mcp-tts-server-stdio
    ```
 
-Once published, users can use the simple uvx configuration shown above!
+This package is already published to PyPI as `mcp-tts`, which is why the simple uvx command works!
 
 ## 🤝 Contributing
 

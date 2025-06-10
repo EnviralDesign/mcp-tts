@@ -81,6 +81,11 @@ async def text_to_speech(
 
     # Generate and play speech
     try:
+        # Check if provider is available first
+        provider = tts_manager.get_current_provider()
+        if not provider:
+            return f"❌ No TTS provider available. Current provider: {tts_manager.current_provider}. Available providers: {', '.join(tts_manager.get_available_providers()) or 'None'}"
+
         if stream:
             success = await tts_manager.generate_and_stream(
                 text=text,
@@ -101,7 +106,7 @@ async def text_to_speech(
         if success:
             return f"✅ Successfully played speech: {len(text)} characters"
         else:
-            return "❌ Failed to generate or play speech"
+            return f"❌ Failed to generate or play speech"
     except Exception as e:
         return f"❌ Error: {str(e)}"
 
