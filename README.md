@@ -143,7 +143,10 @@ Local development (direct command):
     "mcp_tts_server": {
       "command": "uv",
       "args": ["--directory", "C:/repos/mcp-tts", "run", "python", "src/mcp_server.py"],
-      "env": {}
+      "env": {
+        "OPENAI_API_KEY": "your-openai-api-key-here",
+        "PYTHONIOENCODING": "utf-8"
+      }
     }
   }
 }
