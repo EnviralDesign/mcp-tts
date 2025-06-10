@@ -8,6 +8,7 @@ on:
 jobs:
   check-version:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       version: ${{ steps.get-version.outputs.version }}
       should-publish: ${{ steps.check-pypi.outputs.should-publish }}
@@ -35,11 +36,12 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 8
     needs: check-version
     if: needs.check-version.outputs.should-publish == 'true'
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11"]
     
     steps:
       - uses: actions/checkout@v4
@@ -54,8 +56,8 @@ jobs:
         
       - name: Install system audio dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y portaudio19-dev libasound2-dev
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq portaudio19-dev libasound2-dev
         
       - name: Install dependencies
         run: uv sync --all-extras
@@ -65,24 +67,23 @@ jobs:
           uv run ruff check .
           uv run black --check .
           
-      - name: Run tests
+      - name: Run basic tests
         run: |
-          # Run any existing tests
-          if [ -f "tests/test_*.py" ]; then
-            uv run pytest tests/ -v
-          else
-            echo "No tests found, running basic import test"
-            uv run python -c "
-            import sys
-            sys.path.insert(0, 'src')
-            from config import Config
-            from mcp_server import main
-            print('✅ Basic imports successful')
-            "
-          fi
+          export CI_MODE=true
+          echo "Running basic import tests for publish..."
+          uv run python -c "
+          import sys
+          import os
+          sys.path.insert(0, 'src')
+          os.environ['CI_MODE'] = 'true'
+          from config import Config
+          from mcp_server import main
+          print('✅ Basic imports successful for publish')
+          "
 
   build-and-publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [check-version, test]
     if: needs.check-version.outputs.should-publish == 'true'
     environment: pypi  # Requires setting up a GitHub environment

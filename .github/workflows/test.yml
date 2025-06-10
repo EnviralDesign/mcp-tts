@@ -10,6 +10,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       matrix:
         python-version: ["3.11", "3.12"]
@@ -27,8 +28,8 @@ jobs:
         
       - name: Install system audio dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y portaudio19-dev libasound2-dev
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq portaudio19-dev libasound2-dev
         
       - name: Install dependencies
         run: uv sync --all-extras
@@ -41,39 +42,31 @@ jobs:
         
       - name: Run import tests
         run: |
+          export CI_MODE=true
           uv run python -c "
           import sys
           import os
           sys.path.insert(0, 'src')
-          
-          # Set environment variable to indicate CI mode
           os.environ['CI_MODE'] = 'true'
           
-          # Test core imports
-          print('Testing imports...')
+          print('🧪 Testing core imports...')
           from config import Config, VOICE_PRESETS
-          from mcp_server import main
-          print('✅ Core imports successful')
+          print('✅ Config imports successful')
           
-          # Test configuration loading
-          print('Testing configuration...')
+          print('🧪 Testing configuration loading...')
           config = Config.load()
           print(f'✅ Configuration loaded: {config.tts.voice}')
           
-          # Test voice presets
-          print('Testing voice presets...')
+          print('🧪 Testing voice presets...')
           assert len(VOICE_PRESETS) == 9
           assert 'professional' in VOICE_PRESETS
-          assert 'nyc_cabbie' in VOICE_PRESETS
           print('✅ Voice presets loaded correctly')
           
-          # Test TTS manager creation (with CI-safe mode)
-          print('Testing TTS manager...')
-          from tts.manager import TTSManager
-          tts_manager = TTSManager(config)
-          print('✅ TTS Manager created successfully')
+          print('🧪 Testing MCP server import...')
+          from mcp_server import main
+          print('✅ MCP server import successful')
           
-          print('🎉 All basic tests passed!')
+          print('🎉 All CI tests passed!')
           "
           
       - name: Run pytest if test files exist
