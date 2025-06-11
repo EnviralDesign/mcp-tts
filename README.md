@@ -25,6 +25,36 @@ Add text-to-speech capabilities to Cursor IDE. Let your AI assistant speak respo
 
 **That's it!** Restart Cursor and try asking: *"Can you read me a summary using text-to-speech?"*
 
+## ⚙️ Configuration Options
+
+You can control the TTS system using these environment variables in your MCP config:
+
+| Variable | Description | Example Values | Default |
+|----------|-------------|----------------|---------|
+| `OPENAI_API_KEY` | **Required** - Your OpenAI API key | `sk-proj-abc123...` | - |
+| `MCP_TTS_VOICE` | OpenAI voice to use | `alloy`, `echo`, `fable`, `onyx`, `nova`, `shimmer`, `ballad` | `ballad` |
+| `MCP_TTS_VOICE_PRESET` | Voice style preset | `default`, `professional`, `calm`, `nyc_cabbie`, `chill_surfer`, `cheerleader`, `emo_teenager`, `eternal_optimist`, `dramatic` | `default` |
+| `MCP_TTS_CUSTOM_INSTRUCTIONS` | Custom voice instructions (overrides preset) | `"Speak like a pirate"` | - |
+| `MCP_TTS_SPEED` | Speech speed | `0.25` to `4.0` | `1.0` |
+| `MCP_TTS_VOLUME` | Playback volume | `0.0` to `1.0` | `0.8` |
+| `MCP_TTS_DEVICE_NAME` | Audio device name (partial match) | `"Speakers"`, `"Headphones"` | - |
+| `MCP_TTS_DEVICE_INDEX` | Audio device index | `0`, `1`, `2`, etc. | - |
+
+**Tip:** To find your audio device name, first run with basic config, then use the `list_audio_devices` tool to see available devices.
+
+### Voice Presets
+
+You can use these built-in voice style presets:
+- `default` - Clear, friendly, and conversational
+- `professional` - Authoritative business voice
+- `calm` - Composed, reassuring with quiet authority
+- `nyc_cabbie` - Fast-talking New Yorker with edge
+- `chill_surfer` - Laid-back, mellow, effortlessly cool
+- `cheerleader` - High-energy, enthusiastic, motivational
+- `emo_teenager` - Sarcastic, disinterested, melancholic
+- `eternal_optimist` - Positive, solution-oriented
+- `dramatic` - Low, hushed, suspenseful with theatrical flair
+
 ## 🎵 Usage Examples
 
 - *"Use text-to-speech to explain this code"*

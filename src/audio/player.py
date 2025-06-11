@@ -82,8 +82,14 @@ class AudioPlayer:
             True if playback succeeded, False otherwise
         """
         try:
+            # print(f"DEBUG: Received audio data: {len(audio_data)} bytes")
+            if len(audio_data) == 0:
+                # print("DEBUG: No audio data received!")
+                return False
+                
             # Convert bytes to numpy array (assuming 16-bit PCM)
             audio_array = np.frombuffer(audio_data, dtype=np.int16)
+            # print(f"DEBUG: Converted to audio array: {len(audio_array)} samples")
 
             # Convert to float32 and normalize
             audio_float = audio_array.astype(np.float32) / 32768.0
