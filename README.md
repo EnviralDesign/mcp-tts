@@ -69,3 +69,15 @@ For advanced configuration, voice presets, troubleshooting, and development setu
 ---
 
 **Status:** ✅ Working with Cursor IDE • 🎵 7 TTS tools available • 🔊 Cross-platform audio
+
+## 🛠️ Available Tools
+
+This MCP server provides the following tools in Cursor:
+
+- **text_to_speech** — Convert text to speech and play it through your speakers using the current configuration.
+- **list_audio_devices** — List all available audio output devices on your system.
+- **test_audio_device** — Play a test tone on a selected audio device to verify it works.
+- **stop_speech** — Stop any current speech playback immediately.
+- **get_tts_status** — Show the current TTS server status, provider, volume, and device info.
+- **get_current_config** — Display the current voice, preset, device, and all active TTS settings.
+- **set_volume** — Change the playback volume for speech output.
