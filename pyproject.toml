@@ -1,6 +1,6 @@
 [project]
 name = "mcp-tts"
-version = "0.2.7"
+version = "0.3.0"
 description = "MCP Text-to-Speech Server for Cursor IDE (and others) with cross-platform audio playback"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,6 +25,7 @@ dependencies = [
     "uvicorn[standard]>=0.24.0",
     "websockets>=12.0",
     "openai>=1.5.0",
+    "elevenlabs>=1.5.0",
     "sounddevice>=0.4.6",
     "numpy>=1.24.0",
     "pydantic>=2.5.0",
@@ -48,6 +49,7 @@ dev = [
 [project.scripts]
 mcp-tts-server = "src.main:main"
 mcp-tts-server-stdio = "src.mcp_server:main"
+publish-pypi = "scripts.publish_pypi:main"
 
 [build-system]
 requires = ["hatchling"]

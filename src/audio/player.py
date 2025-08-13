@@ -87,6 +87,11 @@ class AudioPlayer:
                 # print("DEBUG: No audio data received!")
                 return False
                 
+            # Ensure even-length buffer for 16-bit PCM
+            if len(audio_data) % 2 != 0:
+                audio_data = audio_data[:-1]
+            if not audio_data:
+                return False
             # Convert bytes to numpy array (assuming 16-bit PCM)
             audio_array = np.frombuffer(audio_data, dtype=np.int16)
             # print(f"DEBUG: Converted to audio array: {len(audio_array)} samples")

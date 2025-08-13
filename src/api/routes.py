@@ -49,6 +49,8 @@ class ServerStatus(BaseModel):
     volume: float
     supported_voices: List[str]
     supported_languages: List[str]
+    openai_key_present: bool
+    elevenlabs_key_present: bool
     audio_devices: List[AudioDevice]
 
 
@@ -88,6 +90,8 @@ def create_api_routes() -> APIRouter:
             volume=status["volume"],
             supported_voices=status["supported_voices"],
             supported_languages=status["supported_languages"],
+            openai_key_present=status["openai_key_present"],
+            elevenlabs_key_present=status["elevenlabs_key_present"],
             audio_devices=[AudioDevice(**device) for device in status["audio_devices"]],
         )
 
@@ -212,6 +216,13 @@ def create_api_routes() -> APIRouter:
         if not tts_manager:
             raise HTTPException(status_code=503, detail="TTS manager not initialized")
 
+        provider = tts_manager.get_current_provider()
+        if provider and hasattr(provider, "list_voices"):
+            try:
+                voices = provider.list_voices()  # type: ignore[attr-defined]
+                return {"voices": voices}
+            except Exception:
+                pass
         voices = tts_manager.get_supported_voices()
         return {"voices": voices}
 
@@ -277,6 +288,8 @@ def create_api_routes() -> APIRouter:
 
         config = tts_manager.config
         return {
+            "provider": tts_manager.current_provider,
+            "available_providers": tts_manager.get_available_providers(),
             "voice": config.tts.voice,
             "speed": config.tts.speed,
             "current_preset": config.tts.current_preset,

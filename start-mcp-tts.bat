@@ -1,4 +1,5 @@
 @echo off
 cd /d "C:\repos\mcp-tts"
 set PYTHONIOENCODING=utf-8
-uv run python src/mcp_server.py 
+rem Prefer uv for running the module directly (no bare "python")
+uv run -m src.mcp_server

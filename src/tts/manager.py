@@ -7,6 +7,7 @@ from typing import Dict, Optional
 
 from tts.providers.base import TTSProvider, TTSRequest
 from tts.providers.openai_fm import OpenAITTSProvider
+from tts.providers.elevenlabs import ElevenLabsTTSProvider
 from audio.player import AudioPlayer
 from config import Config
 
@@ -39,6 +40,15 @@ class TTSManager:
                 logger.info("OpenAI TTS provider initialized")
             else:
                 logger.warning("OpenAI API key not provided - OpenAI TTS unavailable")
+
+            # Initialize ElevenLabs provider if API key is available
+            if getattr(self.config, "elevenlabs_api_key", None):
+                self.providers["elevenlabs"] = ElevenLabsTTSProvider(
+                    self.config.elevenlabs_api_key
+                )
+                logger.info("ElevenLabs TTS provider initialized")
+            else:
+                logger.info("ElevenLabs API key not provided - ElevenLabs TTS unavailable")
 
         except Exception as e:
             logger.error(f"Error initializing TTS providers: {e}")
@@ -242,11 +252,14 @@ class TTSManager:
             "volume": self.get_volume(),
             "supported_voices": self.get_supported_voices(),
             "supported_languages": self.get_supported_languages(),
+            "openai_key_present": bool(getattr(self.config, "openai_api_key", None)),
+            "elevenlabs_key_present": bool(getattr(self.config, "elevenlabs_api_key", None)),
             "audio_devices": [
                 {
                     "index": device.index,
                     "name": device.name,
                     "channels": device.channels,
+                    "sample_rate": device.sample_rate,
                     "is_default": device.is_default,
                 }
                 for device in self.get_audio_devices()

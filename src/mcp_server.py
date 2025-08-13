@@ -25,6 +25,7 @@ from mcp.server import FastMCP
 # Initialize components  
 print(f"🚀 MCP Server starting up...")
 print(f"   OPENAI_API_KEY: {'✅ Present' if os.getenv('OPENAI_API_KEY') else '❌ Missing'}")
+print(f"   ELEVENLABS_API_KEY: {'✅ Present' if os.getenv('ELEVENLABS_API_KEY') else '❌ Missing'}")
 print(f"   MCP_TTS_VOICE: {os.getenv('MCP_TTS_VOICE', 'default')}")
 print(f"   MCP_TTS_VOICE_PRESET: {os.getenv('MCP_TTS_VOICE_PRESET', 'default')}")
 print(f"   MCP_TTS_SPEED: {os.getenv('MCP_TTS_SPEED', '1.0')}")
@@ -55,6 +56,9 @@ async def text_to_speech(text: str) -> str:
     global config, tts_manager
     config = Config.load()
     tts_manager.config = config
+    # Sync provider selection from config each call to allow hot switches via MCP env
+    if config.tts.provider:
+        tts_manager.set_provider(config.tts.provider)
 
     # All settings come from config (single source of truth)
     voice = config.tts.voice

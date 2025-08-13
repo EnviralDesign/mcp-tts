@@ -102,10 +102,19 @@ def create_app(config: Config) -> FastAPI:
                     <p>The MCP TTS server is running on port 8742</p>
                     <p>Configure Cursor to use this server for text-to-speech capabilities.</p>
                 </div>
+                <div class="config-section">
+                    <h2>🔐 Environment & Provider</h2>
+                    <div id="env-status" class="status"></div>
+                    <div class="button-group">
+                        <button class="btn-secondary" onclick="refreshStatus()">🔄 Refresh Status</button>
+                        <button class="btn-primary" onclick="switchProvider('openai')">Use OpenAI</button>
+                        <button class="btn-primary" onclick="switchProvider('elevenlabs')">Use ElevenLabs</button>
+                    </div>
+                </div>
                 
                 <div class="config-section">
                     <h2>🔌 Cursor MCP Integration</h2>
-                    <p>Add this configuration to your Cursor MCP settings file:</p>
+                    <p>Add one of these configurations to your Cursor MCP settings file:</p>
                     <p><strong>File location:</strong> <code>~/.cursor/mcp.json</code> (or <code>C:\\Users\\[username]\\.cursor\\mcp.json</code> on Windows)</p>
                     
                     <div class="code-block">
@@ -230,6 +239,36 @@ def create_app(config: Config) -> FastAPI:
                         }, 2000);
                     }
                 }
+
+                async function refreshStatus() {
+                    try {
+                        const res = await fetch('/api/status');
+                        const data = await res.json();
+                        const lines = [];
+                        lines.push(`Provider: ${data.current_provider}`);
+                        lines.push(`Available: ${data.available_providers.join(', ') || 'None'}`);
+                        lines.push(`OpenAI key: ${data.openai_key_present ? '✅' : '❌'}`);
+                        lines.push(`ElevenLabs key: ${data.elevenlabs_key_present ? '✅' : '❌'}`);
+                        const el = document.getElementById('env-status');
+                        el.className = 'status ' + (data.available_providers.length ? 'success' : 'error');
+                        el.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+                    } catch (e) {
+                        const el = document.getElementById('env-status');
+                        el.className = 'status error';
+                        el.textContent = 'Failed to load status: ' + e.message;
+                    }
+                }
+
+                async function switchProvider(name) {
+                    try {
+                        const res = await fetch(`/api/provider/${name}`, { method: 'POST' });
+                        const data = await res.json();
+                        showStatus(data.message || 'Provider switched', 'success');
+                        refreshStatus();
+                    } catch (e) {
+                        showStatus('Failed to switch provider: ' + e.message, 'error');
+                    }
+                }
             </script>
         </body>
         </html>
@@ -313,6 +352,16 @@ def create_app(config: Config) -> FastAPI:
                             <span id="speed-value">1.0x</span>
                         </div>
                     </div>
+
+                    <div id="elevenlabs-voice-container" class="form-group" style="display:none;">
+                        <label for="eleven-voice">Voice (ElevenLabs - name or ID):</label>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <input id="eleven-voice" placeholder="e.g., Aria or 9BWtsMINqrJLrRacOk9x" style="flex:1;" />
+                            <button class="btn-secondary" onclick="loadElevenVoices()">🔽 Voices</button>
+                        </div>
+                        <div id="eleven-voices-list" style="display:none; margin-top:10px; max-height:180px; overflow:auto; border:1px solid #e0e0e0; border-radius:6px; padding:8px;"></div>
+                        <small style="color: #666;">Pick from your account voices or paste a voice_id.</small>
+                    </div>
                 </div>
 
                                  <div class="section">
@@ -369,6 +418,12 @@ def create_app(config: Config) -> FastAPI:
                 let currentConfig = {};
                 let presets = {};
 
+                function toggleProviderUI(provider) {
+                    const container = document.getElementById('elevenlabs-voice-container');
+                    if (!container) return;
+                    container.style.display = (provider === 'elevenlabs') ? 'block' : 'none';
+                }
+
                 // Load initial data
                 async function loadData() {
                     try {
@@ -384,6 +439,7 @@ def create_app(config: Config) -> FastAPI:
                         // Load current config
                         const configResponse = await fetch('/api/config/current');
                         currentConfig = await configResponse.json();
+                        toggleProviderUI(currentConfig.provider);
                         updateUI();
 
                         // Load audio devices
@@ -396,7 +452,44 @@ def create_app(config: Config) -> FastAPI:
                     }
                 }
 
-                function renderPresets() {
+                async function loadElevenVoices() {
+                    try {
+                        const res = await fetch('/api/voices');
+                        const data = await res.json();
+                        const container = document.getElementById('eleven-voices-list');
+                        if (!data || !data.voices || !Array.isArray(data.voices) || data.voices.length === 0) {
+                            container.style.display = 'block';
+                            container.innerHTML = '<div style="color:#666">No voices found. Ensure ELEVENLABS_API_KEY is set.</div>';
+                            return;
+                        }
+                        const items = data.voices.map(v => {
+                            const preview = v.preview_url ? `<audio controls src="${v.preview_url}" style="width:160px"></audio>` : '';
+                            return `<div style="display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid #f0f0f0;">
+                                <button class="btn-primary" style="padding:6px 10px;" onclick="selectElevenVoice('${v.voice_id.replace(/'/g, "\'")}')">Use</button>
+                                <div style="flex:1;">
+                                    <div style="font-weight:600;">${v.name}</div>
+                                    <div style="font-size:12px; color:#666;">${v.voice_id}</div>
+                                </div>
+                                ${preview}
+                            </div>`;
+                        }).join('');
+                        container.innerHTML = items;
+                        container.style.display = 'block';
+                    } catch (e) {
+                        const container = document.getElementById('eleven-voices-list');
+                        container.style.display = 'block';
+                        container.innerHTML = `<div style="color:#b91c1c">Error: ${e.message}</div>`;
+                    }
+                }
+
+                function selectElevenVoice(voiceId) {
+                    const input = document.getElementById('eleven-voice');
+                    input.value = voiceId;
+                    const list = document.getElementById('eleven-voices-list');
+                    list.style.display = 'none';
+                }
+
+                 function renderPresets() {
                     const grid = document.getElementById('preset-grid');
                     grid.innerHTML = '';
                     
@@ -424,7 +517,7 @@ def create_app(config: Config) -> FastAPI:
                     });
                 }
 
-                                 function updateUI() {
+                 function updateUI() {
                      document.getElementById('voice').value = currentConfig.voice || 'ballad';
                      document.getElementById('speed').value = currentConfig.speed || 1.0;
                      document.getElementById('speed-value').textContent = `${currentConfig.speed || 1.0}x`;
@@ -435,6 +528,12 @@ def create_app(config: Config) -> FastAPI:
                      // Always show the current active voice instructions in the textarea
                      const currentInstructions = currentConfig.current_voice_instructions || '';
                      document.getElementById('custom-instructions').value = currentInstructions;
+
+                     // For ElevenLabs, mirror voice in input
+                     const ev = document.getElementById('eleven-voice');
+                     if (ev && currentConfig.provider === 'elevenlabs') {
+                         ev.value = currentConfig.voice || '';
+                     }
 
                      // Update preset selection visual
                      document.querySelectorAll('.preset-card').forEach(card => {
@@ -566,12 +665,17 @@ def create_app(config: Config) -> FastAPI:
                             return;
                         }
 
-                        const config = {
-                            text: text,
-                            voice: document.getElementById('voice').value,
-                            speed: parseFloat(document.getElementById('speed').value),
-                            device_index: document.getElementById('audio-device').value || null
-                        };
+                         let voiceValue = document.getElementById('voice').value;
+                         const ev = document.getElementById('eleven-voice');
+                         if (currentConfig.provider === 'elevenlabs' && ev && ev.value.trim()) {
+                             voiceValue = ev.value.trim();
+                         }
+                         const config = {
+                             text: text,
+                             voice: voiceValue,
+                             speed: parseFloat(document.getElementById('speed').value),
+                             device_index: document.getElementById('audio-device').value || null
+                         };
 
                                                  // Always use whatever is currently in the instructions field
                          const currentInstructions = document.getElementById('custom-instructions').value;
@@ -620,6 +724,7 @@ def create_app(config: Config) -> FastAPI:
 
                 // Load data on page load
                 loadData();
+                refreshStatus();
             </script>
         </body>
         </html>

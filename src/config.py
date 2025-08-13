@@ -93,6 +93,7 @@ class Config:
     tts: TTSConfig = field(default_factory=TTSConfig)
     audio: AudioConfig = field(default_factory=AudioConfig)
     openai_api_key: Optional[str] = None
+    elevenlabs_api_key: Optional[str] = None
     log_level: str = "INFO"
 
     @classmethod
@@ -125,6 +126,9 @@ class Config:
     def _load_env_vars(self):
         """Load configuration from environment variables."""
         self.openai_api_key = os.getenv("OPENAI_API_KEY", self.openai_api_key)
+        self.elevenlabs_api_key = os.getenv(
+            "ELEVENLABS_API_KEY", self.elevenlabs_api_key
+        )
         self.host = os.getenv("MCP_TTS_HOST", self.host)
         self.port = int(os.getenv("MCP_TTS_PORT", str(self.port)))
         self.log_level = os.getenv("MCP_TTS_LOG_LEVEL", self.log_level)
@@ -180,6 +184,11 @@ class Config:
                 print(
                     f"Warning: Invalid MCP_TTS_DEVICE_INDEX value, using default: {self.audio.default_device_index}"
                 )
+
+        # Provider selection via env var
+        provider_env = os.getenv("MCP_TTS_PROVIDER") or os.getenv("TTS_PROVIDER")
+        if provider_env:
+            self.tts.provider = provider_env
 
     @staticmethod
     def _merge_config(base_config: "Config", file_config: Dict[str, Any]) -> "Config":

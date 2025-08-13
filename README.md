@@ -4,9 +4,9 @@ Add text-to-speech capabilities to Cursor IDE. Let your AI assistant speak respo
 
 ## 🚀 Quick Start
 
-**Prerequisites:** [Cursor IDE](https://cursor.sh) and an [OpenAI API key](https://platform.openai.com/api-keys)
+**Prerequisites:** [Cursor IDE](https://cursor.sh) and either an [OpenAI API key](https://platform.openai.com/api-keys) or an [ElevenLabs API key](https://elevenlabs.io)
 
-**Setup:** Add this to your Cursor MCP settings (`~/.cursor/mcp.json`):
+**Setup:** Add one of these to your Cursor MCP settings (`~/.cursor/mcp.json`):
 
 ```json
 {
@@ -16,6 +16,58 @@ Add text-to-speech capabilities to Cursor IDE. Let your AI assistant speak respo
       "args": ["--from", "mcp-tts", "mcp-tts-server-stdio"],
       "env": {
         "OPENAI_API_KEY": "your-openai-api-key-here",
+        "ELEVENLABS_API_KEY": "your-elevenlabs-api-key-here",
+        "MCP_TTS_PROVIDER": "openai",
+        "MCP_TTS_VOICE": "ballad",
+        "MCP_TTS_VOICE_PRESET": "default",
+        "MCP_TTS_CUSTOM_INSTRUCTIONS": "",
+        "MCP_TTS_SPEED": "1.0",
+        "MCP_TTS_VOLUME": "0.8",
+        "MCP_TTS_DEVICE_NAME": "",
+        "MCP_TTS_DEVICE_INDEX": "",
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  }
+}
+```
+
+OpenAI (voices/presets/speed apply):
+
+```json
+{
+  "mcpServers": {
+    "mcp_tts_server": {
+      "command": "uvx",
+      "args": ["--from", "mcp-tts", "mcp-tts-server-stdio"],
+      "env": {
+        "MCP_TTS_PROVIDER": "openai",
+        "OPENAI_API_KEY": "sk-...",
+        "MCP_TTS_VOICE": "alloy",
+        "MCP_TTS_VOICE_PRESET": "professional",
+        "MCP_TTS_CUSTOM_INSTRUCTIONS": "",
+        "MCP_TTS_SPEED": "1.0",
+        "MCP_TTS_VOLUME": "0.9",
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  }
+}
+```
+
+ElevenLabs (use voice_id or exact name; presets/speed are ignored):
+
+```json
+{
+  "mcpServers": {
+    "mcp_tts_server": {
+      "command": "uvx",
+      "args": ["--from", "mcp-tts", "mcp-tts-server-stdio"],
+      "env": {
+        "MCP_TTS_PROVIDER": "elevenlabs",
+        "ELEVENLABS_API_KEY": "eleven-...",
+        "MCP_TTS_VOICE": "Adam",
+        "MCP_TTS_VOLUME": "0.8",
         "PYTHONIOENCODING": "utf-8"
       }
     }
@@ -31,16 +83,20 @@ You can control the TTS system using these environment variables in your MCP con
 
 | Variable | Description | Example Values | Default |
 |----------|-------------|----------------|---------|
-| `OPENAI_API_KEY` | **Required** - Your OpenAI API key | `sk-proj-abc123...` | - |
-| `MCP_TTS_VOICE` | OpenAI voice to use | `alloy`, `echo`, `fable`, `onyx`, `nova`, `shimmer`, `ballad` | `ballad` |
+| `OPENAI_API_KEY` | Your OpenAI API key (required if using OpenAI) | `sk-proj-abc123...` | - |
+| `ELEVENLABS_API_KEY` | Your ElevenLabs API key (required if using ElevenLabs) | `eleven-xxx...` | - |
+| `MCP_TTS_PROVIDER` | TTS provider to use | `openai`, `elevenlabs` | `openai` |
+| `MCP_TTS_VOICE` | Voice selection | OpenAI: `alloy`, `echo`, ... • ElevenLabs: `voice_id` or exact name (case-insensitive) | `ballad` |
 | `MCP_TTS_VOICE_PRESET` | Voice style preset | `default`, `professional`, `calm`, `nyc_cabbie`, `chill_surfer`, `cheerleader`, `emo_teenager`, `eternal_optimist`, `dramatic` | `default` |
 | `MCP_TTS_CUSTOM_INSTRUCTIONS` | Custom voice instructions (overrides preset) | `"Speak like a pirate"` | - |
-| `MCP_TTS_SPEED` | Speech speed | `0.25` to `4.0` | `1.0` |
+| `MCP_TTS_SPEED` | Speech speed | OpenAI: `0.25` to `4.0` • ElevenLabs: ignored | `1.0` |
 | `MCP_TTS_VOLUME` | Playback volume | `0.0` to `1.0` | `0.8` |
 | `MCP_TTS_DEVICE_NAME` | Audio device name (partial match) | `"Speakers"`, `"Headphones"` | - |
 | `MCP_TTS_DEVICE_INDEX` | Audio device index | `0`, `1`, `2`, etc. | - |
 
-**Tip:** To find your audio device name, first run with basic config, then use the `list_audio_devices` tool to see available devices.
+Tips:
+- Open the local Config page to pick an ElevenLabs voice from your account (with previews), or call their API and paste a `voice_id`.
+- OpenAI accepts built-in voice names and presets; ElevenLabs uses `voice_id` or exact voice name. Presets/instructions/speed are ignored by ElevenLabs.
 
 ### Voice Presets
 
@@ -68,7 +124,7 @@ For advanced configuration, voice presets, troubleshooting, and development setu
 
 ---
 
-**Status:** ✅ Working with Cursor IDE • 🎵 7 TTS tools available • 🔊 Cross-platform audio
+**Status:** ✅ Working with Cursor IDE • 🎵 7 TTS tools available • 🔊 Cross-platform audio • 🧩 Providers: OpenAI, ElevenLabs
 
 ## 🛠️ Available Tools
 
